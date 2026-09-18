@@ -7,7 +7,13 @@ authors = [
     { name = "MahyarRajaei", email = "mahyar.rajaei.mail@gmail.com" }
 ]
 requires-python = ">=3.12.13"
-dependencies = []
+dependencies = [
+    "pgvector>=0.5.0",
+    "psycopg2-binary>=2.9.13",
+    "pytest>=9.1.1",
+    "python-dotenv>=1.2.3",
+    "sqlalchemy>=2.0.54",
+]
 
 [project.scripts]
 adan = "adan:main"
@@ -15,3 +21,12 @@ adan = "adan:main"
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests"]
+
+
