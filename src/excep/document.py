@@ -57,3 +57,17 @@ class DocumentNotReadyError(AppError):
         self.document_id = document_id
         self.status = status
         super().__init__(f"Document {document_id} is not ready (status={status})")
+
+
+class ExtractionError(AppError):
+    """couldn't extract contentfrom document."""
+
+    code = "Extraction Error"
+    status_code = 409
+
+    def __init__(self, document_id: UUID, status: str):
+        self.document_id = document_id
+        self.status = status
+        super().__init__(
+            f"couldnt extract Document {document_id} is not ready (status={status})"
+        )

@@ -1,4 +1,3 @@
-import os
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -8,12 +7,11 @@ from sqlalchemy import DateTime, ForeignKey, Integer, Text, UniqueConstraint, fu
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+import config
 from db.session import Base
 
 if TYPE_CHECKING:
     from model.document import Document
-
-EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "1536"))
 
 
 class Chunk(Base):
@@ -36,7 +34,7 @@ class Chunk(Base):
     token_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
     embedding: Mapped[list[float]] = mapped_column(
-        Vector(EMBEDDING_DIM), nullable=False
+        Vector(config.EMBEDDING_DIM), nullable=False
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -44,6 +42,3 @@ class Chunk(Base):
     )
 
     document: Mapped["Document"] = relationship("Document", back_populates="chunks")
-
-    def __repr__(self) -> str:
-        return f"<Chunk doc={self.document_id} idx={self.chunk_index}>"

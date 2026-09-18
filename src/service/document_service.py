@@ -31,7 +31,6 @@ class DocumentService:
 
         raw_bytes = path.read_bytes()
         file_hash = compute_sha256(raw_bytes)
-        content_hash = file_hash
         file_size_bytes = len(raw_bytes)
 
         suffix = path.suffix.lower()
@@ -55,7 +54,6 @@ class DocumentService:
             # id=document_id,
             filename=path.name,
             file_hash=file_hash,
-            content_hash=content_hash,
             storage_path=storage_path,
             file_type=file_type,
             file_size_bytes=file_size_bytes,
