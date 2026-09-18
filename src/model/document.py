@@ -52,6 +52,9 @@ class Document(Base):
         default=DocumentStatus.PENDING,
         index=True,
     )
+
+    storage_path: Mapped[str] = mapped_column(String(500), nullable=False)
+
     status_reason: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     chunk_count: Mapped[int] = mapped_column(default=0)
