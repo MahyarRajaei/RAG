@@ -51,7 +51,7 @@ class DocumentService:
         storage_path = self.storage.save(document_id, path.name, raw_bytes)
 
         document = Document(
-            # id=document_id,
+            id=document_id,
             filename=path.name,
             file_hash=file_hash,
             storage_path=storage_path,

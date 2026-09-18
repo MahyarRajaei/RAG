@@ -3,8 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-import config
-from model.chunk import Chunk
+from model import Chunk, Document, DocumentStatus
 
 
 class ChunkRepository:
@@ -20,16 +19,21 @@ class ChunkRepository:
     def search_by_embedding(
         self,
         query_embedding: list[float],
-        top_k: int = config.RETRIEVER_TOP_K,
-        document_id: UUID | None = None,
-    ) -> list[Chunk]:
+        top_k: int,
+        document_ids: list[UUID] | None = None,
+    ) -> list[tuple[Chunk, float]]:
+        distance_col = Chunk.embedding.cosine_distance(query_embedding)
         stmt = (
-            select(Chunk)
-            .order_by(Chunk.embedding.cosine_distance(query_embedding))
+            select(Chunk, Document.filename, distance_col.label("distance"))
+            .join(Document, Chunk.document_id == Document.id)
+            .where(Document.status == DocumentStatus.READY)
+            .order_by(distance_col.desc())
             .limit(top_k)
         )
+        if document_ids is not None:
+            stmt = stmt.where(Chunk.document_id.in_(document_ids))
 
-        if document_id is not None:
-            stmt = stmt.where(Chunk.document_id == document_id)
-
-        return list(self.session.scalars(stmt))
+        return [
+            (row.Chunk, row.distance, row.filename)
+            for row in self.session.execute(stmt)
+        ]

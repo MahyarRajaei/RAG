@@ -4,9 +4,10 @@ import db
 import model
 import repository
 import service
-from rag.embedding import LangChainEmbeddingProvider
+from rag.ingestion.embedding import LangChainEmbeddingProvider
+from rag.llm import LLMProvider
 
-FILE_PATH = "documents/chunking_strategies.md"
+FILE_PATH = "documents/software_eng.md"
 STORAGE_PATH = "data"
 
 storage = db.LocalFileStorage(STORAGE_PATH)
@@ -47,21 +48,32 @@ except SQLAlchemyError as e:
 ### ingestion pipeline
 try:
     with db.get_db() as db_session:
-        # doc_serv = service.DocumentService(db_session, storage)
-        # for doc in doc_serv.list_doc():
-        #     doc_id = doc.id
-        #     print(f"ingesting: {doc_id}")
-        #     ing_pipe = service.IngestionPipeline(
-        #         db_session, storage, embedding_provider
-        #     )
-        #     ing_pipe.process(doc_id)
         emb = LangChainEmbeddingProvider()
-        chunk_repo = repository.ChunkRepository(db_session)
-        chunks = chunk_repo.search_by_embedding(
-            emb.embed_query("explain about Software design principles.")
-        )
-        for chunk in chunks:
-            print(chunk.text)
-            print("*" * 50)
+        doc_serv = service.DocumentService(db_session, storage)
+        for doc in doc_serv.list_doc():
+            doc_id = doc.id
+            print(f"ingesting: {doc_id}")
+            ing_pipe = service.IngestionPipeline(db_session, storage, emb)
+            ing_pipe.process(doc_id)
+        # emb = LangChainEmbeddingProvider()
+        # chunk_repo = repository.ChunkRepository(db_session)
+        # chunks = chunk_repo.search_by_embedding(
+        #     emb.embed_query("explain about Software design principles.")
+        # )
+        # for chunk in chunks:
+        #     print(chunk.text)
+        #     print("*" * 50)
 except SQLAlchemyError as e:
     print(f"error! {e}")
+
+
+try:
+    with db.get_db() as db_session:
+        chunk_repo = repository.ChunkRepository(db_session)
+        emb = LangChainEmbeddingProvider()
+        llm = LLMProvider()
+        qs = service.QueryService(chunk_repo, emb, llm)
+        ans = qs.answer("explain about software bad smells principles.")
+        print(ans)
+except SQLAlchemyError as e:
+    print(f"error {e}")

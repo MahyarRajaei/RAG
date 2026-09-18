@@ -9,9 +9,9 @@ from db.storage.base import FileStorage
 from excep.document import DocumentNotFoundError
 from model.chunk import Chunk
 from model.document import DocumentStatus
-from rag.chunking import chunk_text
-from rag.embedding import EmbeddingProvider
-from rag.extraction import extract_text
+from rag.ingestion.chunking import chunk_text
+from rag.ingestion.embedding import EmbeddingProvider
+from rag.ingestion.extraction import extract_text
 from repository.chunk_repository import ChunkRepository
 from repository.document_repository import DocumentRepository
 
