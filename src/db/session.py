@@ -6,7 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
-
 DB_USER = os.getenv("POSTGRES_USER")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
@@ -40,10 +39,14 @@ def get_db():
 
 
 def init_db():
+    import model
+
+    # TODO: needs to be fixed
+    st = model.DocumentStatus.PENDING
     Base.metadata.create_all(bind=engine)
 
 
 try:
     init_db()
-except Exception:
-    pass
+except Exception as e:
+    print(f"couldn't init db:\n {e}")

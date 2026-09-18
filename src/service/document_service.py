@@ -1,8 +1,11 @@
 import hashlib
+import uuid
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+import db
+from excep import DocumentNotFoundError
 from model.document import Document, DocumentStatus, MIMEType
 from repository.document_repository import DocumentRepository
 
@@ -12,9 +15,10 @@ def compute_sha256(content: bytes) -> str:
 
 
 class DocumentService:
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, storage: db.FileStorage) -> None:
         self.session = session
         self.repository = DocumentRepository(session)
+        self.storage = storage
 
     def insert_from_file(
         self,
@@ -44,13 +48,28 @@ class DocumentService:
         if existing:
             return existing
 
+        document_id = uuid.uuid4()
+        storage_path = self.storage.save(document_id, path.name, raw_bytes)
+
         document = Document(
+            # id=document_id,
             filename=path.name,
             file_hash=file_hash,
             content_hash=content_hash,
+            storage_path=storage_path,
             file_type=file_type,
             file_size_bytes=file_size_bytes,
             status=status,
             chunk_count=0,
         )
         return self.repository.add(document)
+
+    def list_doc(self):
+        return self.repository.list_all()
+
+    def get_content(self, document_id: uuid.UUID) -> bytes:
+        document = self.repository.get_by_id(document_id)
+        if document is None:
+            raise DocumentNotFoundError(document_id)
+        print(document)
+        return self.storage.read(document.storage_path)
