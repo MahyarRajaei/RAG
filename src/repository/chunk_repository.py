@@ -28,7 +28,7 @@ class ChunkRepository:
             select(Chunk, Document.filename, distance_col.label("distance"))
             .join(Document, Chunk.document_id == Document.id)
             .where(Document.status == DocumentStatus.READY)
-            .order_by(distance_col.desc())
+            .order_by(distance_col)
             .limit(top_k)
         )
         if document_ids is not None:

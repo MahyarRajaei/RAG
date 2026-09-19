@@ -57,7 +57,7 @@ def build_query_graph(
 
     def route_on_relevance(state: QueryState) -> str:
         results = state["retrieved"]
-        if not results or results[0][1] < config.MIN_RELEVANCE_THRESHOLD:
+        if not results or results[0][1] > config.MAX_DISTANCE_TH:
             return "insufficient"
         return "generate"
 

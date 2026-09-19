@@ -1,6 +1,16 @@
 version: "3.9"
 
 services:
+  api:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
   db:
     image: pgvector/pgvector:pg16
     container_name: postgres
