@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Adan · Document Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef1ec;
+    --paper-raised: #f7f8f5;
+    --ink: #141b1a;
+    --ink-soft: #4b5551;
+    --line: #d6dad2;
+    --line-strong: #b9beb3;
+    --accent: #b9782c;
+    --accent-ink: #5c3d16;
+    --teal: #2b6e68;
+    --teal-soft: #e2ece9;
+    --red: #a3402f;
+    --red-soft: #f3e3df;
+    --amber-soft: #f2e6cf;
+    --grey-soft: #e4e6e0;
+    --radius: 3px;
+    --serif: 'Lora', Georgia, serif;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--teal); }
+
+  button {
+    font-family: var(--sans);
+    cursor: pointer;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+  }
+
+  /* ---------- layout shell ---------- */
+
+  .shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  header.top {
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 28px;
+  }
+
+  .top-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  .brand p {
+    margin: 4px 0 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  .health {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .health-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--line-strong);
+    flex-shrink: 0;
+  }
+  .health-dot.ok { background: var(--teal); }
+  .health-dot.bad { background: var(--red); }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 22px;
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 4px;
+    margin-right: 22px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+
+  .settings-toggle {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 4px 0;
+  }
+
+  .settings-panel {
+    display: none;
+    gap: 10px;
+    align-items: center;
+    margin: 12px 0 4px;
+    padding: 12px 14px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .settings-panel.open { display: flex; flex-wrap: wrap; }
+  .settings-panel input {
+    font-family: var(--mono);
+    font-size: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    background: #fff;
+    min-width: 260px;
+    flex: 1;
+  }
+  .settings-panel button {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius);
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---------- generic elements ---------- */
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+
+  .empty-state {
+    padding: 44px 20px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .empty-state .glyph {
+    font-family: var(--serif);
+    font-size: 28px;
+    color: var(--line-strong);
+    margin-bottom: 6px;
+  }
+  .empty-state p { margin: 4px 0; }
+  .empty-state .hint { font-size: 12px; }
+
+  .toast-stack {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 50;
+    max-width: 340px;
+  }
+  .toast {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 11px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .toast.error { background: var(--red); }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-transform: lowercase;
+    white-space: nowrap;
+  }
+  .status-chip::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .status-pending { background: var(--grey-soft); color: var(--ink-soft); }
+  .status-pending::before { background: var(--ink-soft); }
+  .status-processing { background: var(--amber-soft); color: var(--accent-ink); }
+  .status-processing::before { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  .status-ready { background: var(--teal-soft); color: var(--teal); }
+  .status-ready::before { background: var(--teal); }
+  .status-failed { background: var(--red-soft); color: var(--red); }
+  .status-failed::before { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* ---------- documents view ---------- */
+
+  .upload-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+  }
+  .filter-chip {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .filter-chip.active {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: var(--grey-soft);
+  }
+
+  .upload-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .upload-btn:hover { background: #26302d; }
+  .upload-btn input { display: none; }
+
+  table.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .doc-table thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    font-weight: 500;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .doc-table tbody tr {
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .doc-table tbody tr:hover { background: rgba(0,0,0,0.02); }
+  .doc-table td {
+    padding: 13px 16px;
+    vertical-align: middle;
+  }
+  .doc-filename {
+    font-weight: 500;
+  }
+  .doc-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .doc-actions {
+    text-align: right;
+  }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 5px 9px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .icon-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .pagination button {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 5px 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+
+  /* ---------- upload queue ---------- */
+  .upload-queue {
+    border-bottom: 1px solid var(--line);
+  }
+  .upload-queue:empty { border-bottom: none; }
+  .upload-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+  }
+  .upload-row:last-child { border-bottom: none; }
+  .upload-row .fname {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .upload-row .upload-msg {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .upload-row .dismiss-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+    flex-shrink: 0;
+  }
+  .upload-row .dismiss-btn:hover { color: var(--ink); }
+
+  .spinner {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--line-strong);
+    border-top-color: var(--accent);
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-queued { background: var(--grey-soft); color: var(--ink-soft); }
+  .status-queued::before { background: var(--line-strong); }
+  .status-uploading { background: var(--amber-soft); color: var(--accent-ink); }
+  .status-uploading::before { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  .status-done { background: var(--teal-soft); color: var(--teal); }
+  .status-done::before { background: var(--teal); }
+  .status-error { background: var(--red-soft); color: var(--red); }
+  .status-error::before { background: var(--red); }
+
+  /* ---------- selection ---------- */
+  .doc-table th.checkbox-col, .doc-table td.checkbox-col {
+    padding-right: 4px;
+    width: 34px;
+  }
+  .doc-table input[type="checkbox"],
+  .drawer input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--teal);
+    cursor: pointer;
+  }
+
+  .selection-toolbar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--teal-soft);
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .selection-toolbar.open { display: flex; }
+  .selection-toolbar .count {
+    color: var(--teal);
+    font-weight: 500;
+  }
+  .selection-toolbar .actions {
+    display: flex;
+    gap: 8px;
+  }
+  .selection-toolbar button {
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    color: var(--ink);
+  }
+  .selection-toolbar button.danger {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .selection-toolbar button.danger:hover { background: var(--red-soft); }
+  .selection-toolbar button.primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .selection-toolbar button.clear-btn {
+    border: none;
+    background: none;
+    color: var(--teal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* ---------- detail drawer ---------- */
+
+  .drawer-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 27, 26, 0.35);
+    z-index: 40;
+  }
+  .drawer-backdrop.open { display: block; }
+
+  .drawer {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(420px, 92vw);
+    background: var(--paper-raised);
+    border-left: 1px solid var(--line);
+    z-index: 41;
+    transform: translateX(100%);
+    transition: transform 0.22s ease;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .drawer.open { transform: translateX(0); }
+
+  .drawer-close {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 20px;
+    line-height: 1;
+    float: right;
+  }
+
+  .drawer h2 {
+    font-family: var(--serif);
+    font-size: 18px;
+    margin: 0 0 18px;
+    padding-right: 30px;
+    word-break: break-word;
+  }
+
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .field-row dt { color: var(--ink-soft); }
+  .field-row dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: right;
+    word-break: break-all;
+  }
+
+  .fail-reason {
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--red-soft);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--red);
+    font-family: var(--mono);
+    white-space: pre-wrap;
+  }
+
+  .drawer-delete {
+    margin-top: 22px;
+    width: 100%;
+    background: none;
+    border: 1px solid var(--red);
+    color: var(--red);
+    border-radius: var(--radius);
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .drawer-delete:hover { background: var(--red-soft); }
+
+  /* ---------- ask view ---------- */
+
+  .ask-panel { padding: 22px; }
+
+  .scope-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .doc-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .doc-chip {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .doc-chip.selected {
+    border-color: var(--teal);
+    color: var(--teal);
+    background: var(--teal-soft);
+  }
+  .doc-chip.all-chip.selected {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: var(--grey-soft);
+  }
+
+  textarea.question-input {
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    resize: vertical;
+    min-height: 72px;
+    background: #fff;
+  }
+
+  .ask-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+  .ask-submit {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ask-submit:disabled { opacity: 0.5; cursor: default; }
+
+  .answer-block {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .answer-question {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0 0 14px;
+  }
+  .answer-text {
+    font-size: 15px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+  .answer-text.insufficient {
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .sources-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin: 22px 0 10px;
+  }
+  .source-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .source-item .doc-name { font-weight: 500; }
+  .source-item .chunk-idx {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .history-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .history-item:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand-row">
+      <div class="brand">
+        <h1>Adan</h1>
+        <p>Document intelligence — upload, index, and ask</p>
+      </div>
+      <div class="health">
+        <span class="health-dot" id="healthDot"></span>
+        <span id="healthLabel">checking…</span>
+        <button class="settings-toggle" id="settingsToggleBtn" style="margin-left:10px;">api settings</button>
+      </div>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+      <label for="apiBaseInput">API base URL</label>
+      <input id="apiBaseInput" type="text" spellcheck="false" />
+      <button id="saveApiBaseBtn">Save</button>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="documents">Documents</button>
+      <button class="tab" data-view="ask">Ask</button>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- ===================== DOCUMENTS VIEW ===================== -->
+  <section class="view active" id="view-documents">
+
+    <div class="upload-row">
+      <div class="filter-chips" id="statusFilters">
+        <button class="filter-chip active" data-status="">all</button>
+        <button class="filter-chip" data-status="pending">pending</button>
+        <button class="filter-chip" data-status="processing">processing</button>
+        <button class="filter-chip" data-status="ready">ready</button>
+        <button class="filter-chip" data-status="failed">failed</button>
+      </div>
+      <label class="upload-btn">
+        + Upload document
+        <input type="file" id="fileInput" accept=".txt,.md,.markdown,.docx" multiple />
+      </label>
+    </div>
+
+    <div class="panel">
+      <div class="upload-queue" id="uploadQueue"></div>
+
+      <div class="selection-toolbar" id="selectionToolbar">
+        <span class="count" id="selectionCount">0 selected</span>
+        <span class="actions">
+          <button class="clear-btn" id="clearSelectionBtn">clear</button>
+          <button class="primary" id="askSelectedBtn">Ask about selected</button>
+          <button class="danger" id="deleteSelectedBtn">Delete selected</button>
+        </span>
+      </div>
+
+      <div id="docTableWrap">
+        <table class="doc-table" id="docTable" style="display:none;">
+          <thead>
+            <tr>
+              <th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox" title="Select all on this page" /></th>
+              <th>Filename</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Chunks</th>
+              <th>Uploaded</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="docTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="docEmptyState">
+          <div class="glyph">＋</div>
+          <p>No documents yet.</p>
+          <p class="hint">Upload a .txt, .md, or .docx file to get started.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination" id="pagination">
+      <span id="paginationSummary"></span>
+      <span>
+        <button id="prevPageBtn">← prev</button>
+        <button id="nextPageBtn">next →</button>
+      </span>
+    </div>
+  </section>
+
+  <!-- ===================== ASK VIEW ===================== -->
+  <section class="view" id="view-ask">
+    <div class="panel ask-panel">
+      <div class="scope-label">Ask across</div>
+      <div class="doc-chip-row" id="askDocChips">
+        <button class="doc-chip all-chip selected" data-id="">All documents</button>
+      </div>
+
+      <textarea class="question-input" id="questionInput" placeholder="What are the main security issues discussed in the documents?"></textarea>
+
+      <div class="ask-submit-row">
+        <button class="ask-submit" id="askSubmitBtn">
+          <span id="askSubmitLabel">Ask</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="answerHistory"></div>
+  </section>
+
+</div>
+
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerCloseBtn">&times;</button>
+  <h2 id="drawerFilename"></h2>
+  <dl id="drawerFields"></dl>
+  <div id="drawerFailReason"></div>
+  <button class="drawer-delete" id="drawerDeleteBtn">Delete document</button>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------
+  // Config
+  // ---------------------------------------------------------------
+  const DEFAULT_API_BASE = 'http://localhost:8000';
+  let apiBase = localStorage.getItem('adan_api_base') || DEFAULT_API_BASE;
+
+  const apiBaseInput = document.getElementById('apiBaseInput');
+  const settingsPanel = document.getElementById('settingsPanel');
+  apiBaseInput.value = apiBase;
+
+  document.getElementById('settingsToggleBtn').addEventListener('click', () => {
+    settingsPanel.classList.toggle('open');
+  });
+  document.getElementById('saveApiBaseBtn').addEventListener('click', () => {
+    const val = apiBaseInput.value.trim().replace(/\/+$/, '');
+    if (!val) return;
+    apiBase = val;
+    localStorage.setItem('adan_api_base', apiBase);
+    settingsPanel.classList.remove('open');
+    toast('API base updated.');
+    refreshHealth();
+    loadDocuments();
+  });
+
+  // ---------------------------------------------------------------
+  // Toasts
+  // ---------------------------------------------------------------
+  function toast(message, isError = false) {
+    const stack = document.getElementById('toastStack');
+    const el = document.createElement('div');
+    el.className = 'toast' + (isError ? ' error' : '');
+    el.textContent = message;
+    stack.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+
+  // ---------------------------------------------------------------
+  // API helper — every backend error has shape {error:{code,message}}
+  // ---------------------------------------------------------------
+  async function api(path, options = {}) {
+    let res;
+    try {
+      res = await fetch(apiBase + path, options);
+    } catch (err) {
+      throw new Error(`Can't reach the API at ${apiBase}. Is it running, and is CORS enabled?`);
+    }
+    if (res.status === 204) return null;
+
+    let body = null;
+    try { body = await res.json(); } catch (_) { /* no body */ }
+
+    if (!res.ok) {
+      const message = body && body.error && body.error.message
+        ? body.error.message
+        : `Request failed (${res.status})`;
+      throw new Error(message);
+    }
+    return body;
+  }
+
+  // ---------------------------------------------------------------
+  // Tabs
+  // ---------------------------------------------------------------
+  function switchToView(viewName) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.view === viewName));
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + viewName));
+  }
+
+  document.querySelectorAll('.tab').forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      switchToView(tabBtn.dataset.view);
+      if (tabBtn.dataset.view === 'ask') loadAskChips();
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Health
+  // ---------------------------------------------------------------
+  async function refreshHealth() {
+    const dot = document.getElementById('healthDot');
+    const label = document.getElementById('healthLabel');
+    try {
+      await api('/health');
+      dot.className = 'health-dot ok';
+      label.textContent = 'online';
+    } catch (_) {
+      dot.className = 'health-dot bad';
+      label.textContent = 'unreachable';
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Documents: state
+  // ---------------------------------------------------------------
+  const PAGE_SIZE = 10;
+  let currentOffset = 0;
+  let currentStatus = '';
+  let lastTotal = 0;
+  let hasActiveProcessing = false;
+  let pollTimer = null;
+
+  const selectedRowIds = new Set();   // persists across pages/filters until cleared
+  const docsById = {};                // id -> last-seen doc object, for status lookups
+
+  function updateSelectionToolbar() {
+    const toolbar = document.getElementById('selectionToolbar');
+    const count = selectedRowIds.size;
+    toolbar.classList.toggle('open', count > 0);
+    document.getElementById('selectionCount').textContent =
+      count === 1 ? '1 selected' : `${count} selected`;
+
+    const visibleRows = Array.from(document.querySelectorAll('#docTableBody tr'));
+    const selectAll = document.getElementById('selectAllCheckbox');
+    if (visibleRows.length === 0) {
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+    } else {
+      const selectedVisible = visibleRows.filter(r => selectedRowIds.has(r.dataset.id)).length;
+      selectAll.checked = selectedVisible === visibleRows.length;
+      selectAll.indeterminate = selectedVisible > 0 && selectedVisible < visibleRows.length;
+    }
+  }
+
+  document.getElementById('selectAllCheckbox').addEventListener('change', (e) => {
+    const visibleRows = Array.from(document.querySelectorAll('#docTableBody tr'));
+    visibleRows.forEach(row => {
+      if (e.target.checked) selectedRowIds.add(row.dataset.id);
+      else selectedRowIds.delete(row.dataset.id);
+      const cb = row.querySelector('.row-checkbox');
+      if (cb) cb.checked = e.target.checked;
+    });
+    updateSelectionToolbar();
+  });
+
+  document.getElementById('clearSelectionBtn').addEventListener('click', () => {
+    selectedRowIds.clear();
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    updateSelectionToolbar();
+  });
+
+  document.getElementById('deleteSelectedBtn').addEventListener('click', bulkDeleteSelected);
+  document.getElementById('askSelectedBtn').addEventListener('click', askAboutSelected);
+
+  async function bulkDeleteSelected() {
+    const ids = Array.from(selectedRowIds);
+    if (ids.length === 0) return;
+    const label = ids.length === 1 ? 'this document' : `these ${ids.length} documents`;
+    if (!confirm(`Delete ${label}? This removes their indexed content permanently.`)) return;
+
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await api(`/documents/${id}`, { method: 'DELETE' });
+      } catch (err) {
+        failed++;
+      }
+    }
+    const succeeded = ids.length - failed;
+    if (succeeded > 0) toast(`${succeeded} document${succeeded === 1 ? '' : 's'} deleted.`);
+    if (failed > 0) toast(`${failed} deletion${failed === 1 ? '' : 's'} failed.`, true);
+
+    selectedRowIds.clear();
+    loadDocuments();
+  }
+
+  async function askAboutSelected() {
+    const ids = Array.from(selectedRowIds);
+    if (ids.length === 0) return;
+
+    const readyIds = ids.filter(id => docsById[id] && docsById[id].status === 'ready');
+    const skipped = ids.length - readyIds.length;
+    if (readyIds.length === 0) {
+      toast("None of the selected documents are ready to query yet.", true);
+      return;
+    }
+    if (skipped > 0) {
+      toast(`${skipped} selected document${skipped === 1 ? '' : 's'} not ready yet — excluded from scope.`, true);
+    }
+
+    switchToView('ask');
+    await loadAskChips();
+    selectedDocIds = new Set(readyIds);
+    renderAskChipState();
+    document.getElementById('questionInput').focus();
+  }
+
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentStatus = chip.dataset.status;
+      currentOffset = 0;
+      loadDocuments();
+    });
+  });
+
+  document.getElementById('prevPageBtn').addEventListener('click', () => {
+    currentOffset = Math.max(0, currentOffset - PAGE_SIZE);
+    loadDocuments();
+  });
+  document.getElementById('nextPageBtn').addEventListener('click', () => {
+    if (currentOffset + PAGE_SIZE < lastTotal) {
+      currentOffset += PAGE_SIZE;
+      loadDocuments();
+    }
+  });
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+      ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function statusChipHtml(status) {
+    return `<span class="status-chip status-${status}">${status}</span>`;
+  }
+
+  async function loadDocuments() {
+    const qs = new URLSearchParams({ limit: PAGE_SIZE, offset: currentOffset });
+    if (currentStatus) qs.set('status', currentStatus);
+
+    let data;
+    try {
+      data = await api('/documents?' + qs.toString());
+    } catch (err) {
+      toast(err.message, true);
+      return;
+    }
+
+    lastTotal = data.total;
+    const table = document.getElementById('docTable');
+    const tbody = document.getElementById('docTableBody');
+    const emptyState = document.getElementById('docEmptyState');
+
+    hasActiveProcessing = data.items.some(d => d.status === 'pending' || d.status === 'processing');
+    data.items.forEach(doc => { docsById[doc.id] = doc; });
+
+    // drop selections for documents that no longer exist (e.g. deleted elsewhere)
+    // — cheap check only against what we've ever seen, not exhaustive, fine for a UI aid.
+
+    if (data.items.length === 0) {
+      table.style.display = 'none';
+      emptyState.style.display = 'block';
+    } else {
+      table.style.display = 'table';
+      emptyState.style.display = 'none';
+      tbody.innerHTML = data.items.map(doc => `
+        <tr data-id="${doc.id}">
+          <td class="checkbox-col">
+            <input type="checkbox" class="row-checkbox" ${selectedRowIds.has(doc.id) ? 'checked' : ''} />
+          </td>
+          <td>
+            <div class="doc-filename">${escapeHtml(doc.filename)}</div>
+          </td>
+          <td class="doc-meta">${doc.file_type}</td>
+          <td>${statusChipHtml(doc.status)}</td>
+          <td class="doc-meta">${doc.chunk_count ?? '—'}</td>
+          <td class="doc-meta">${fmtDate(doc.created_at)}</td>
+          <td class="doc-actions">
+            <button class="icon-btn" data-delete="${doc.id}" title="Delete">delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('tr').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('[data-delete]') || e.target.closest('.row-checkbox')) return;
+          openDrawer(row.dataset.id);
+        });
+      });
+      tbody.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await deleteDocument(btn.dataset.delete);
+        });
+      });
+      tbody.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const id = e.target.closest('tr').dataset.id;
+          if (e.target.checked) selectedRowIds.add(id);
+          else selectedRowIds.delete(id);
+          updateSelectionToolbar();
+        });
+      });
+    }
+
+    const from = data.total === 0 ? 0 : currentOffset + 1;
+    const to = Math.min(currentOffset + PAGE_SIZE, data.total);
+    document.getElementById('paginationSummary').textContent = `${from}–${to} of ${data.total}`;
+    document.getElementById('prevPageBtn').disabled = currentOffset === 0;
+    document.getElementById('nextPageBtn').disabled = currentOffset + PAGE_SIZE >= data.total;
+
+    updateSelectionToolbar();
+    schedulePoll();
+  }
+
+  function schedulePoll() {
+    clearTimeout(pollTimer);
+    if (hasActiveProcessing) {
+      pollTimer = setTimeout(loadDocuments, 2500);
+    }
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // ---------------------------------------------------------------
+  // Upload
+  // ---------------------------------------------------------------
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    uploadFiles(files);
+  });
+
+  let uploadSeq = 0;
+
+  function renderUploadRow(entry) {
+    const row = document.createElement('div');
+    row.className = 'upload-row';
+    row.dataset.uid = entry.uid;
+    row.innerHTML = `
+      ${entry.state === 'uploading' ? '<span class="spinner"></span>' : `<span class="status-chip status-${entry.state}">${entry.state}</span>`}
+      <span class="fname">${escapeHtml(entry.name)}</span>
+      ${entry.message ? `<span class="upload-msg" title="${escapeHtml(entry.message)}">${escapeHtml(entry.message)}</span>` : ''}
+      <button class="dismiss-btn" title="Dismiss">&times;</button>
+    `;
+    row.querySelector('.dismiss-btn').addEventListener('click', () => row.remove());
+    return row;
+  }
+
+  function updateUploadRow(entry) {
+    const existing = document.querySelector(`.upload-row[data-uid="${entry.uid}"]`);
+    if (!existing) return;
+    existing.replaceWith(renderUploadRow(entry));
+  }
+
+  async function uploadFiles(files) {
+    const queue = document.getElementById('uploadQueue');
+    const entries = files.map(file => ({ uid: ++uploadSeq, name: file.name, file, state: 'queued', message: '' }));
+    entries.forEach(entry => queue.appendChild(renderUploadRow(entry)));
+
+    // Sequential, not parallel: keeps upload order predictable and avoids
+    // hammering the API with N simultaneous multipart requests on a batch upload.
+    for (const entry of entries) {
+      entry.state = 'uploading';
+      updateUploadRow(entry);
+
+      const formData = new FormData();
+      formData.append('file', entry.file);
+
+      try {
+        const result = await api('/documents', { method: 'POST', body: formData });
+        entry.state = 'done';
+        entry.message = result.status === 'ready' ? 'ready' : `queued — ${result.status}`;
+        updateUploadRow(entry);
+        // auto-clear successful rows after a few seconds; leave failures visible
+        setTimeout(() => {
+          const el = document.querySelector(`.upload-row[data-uid="${entry.uid}"]`);
+          if (el) el.remove();
+        }, 4000);
+      } catch (err) {
+        entry.state = 'error';
+        entry.message = err.message;
+        updateUploadRow(entry);
+      }
+
+      currentOffset = 0;
+      loadDocuments();
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Delete
+  // ---------------------------------------------------------------
+  async function deleteDocument(id) {
+    if (!confirm('Delete this document? This removes its indexed content permanently.')) return;
+    try {
+      await api(`/documents/${id}`, { method: 'DELETE' });
+      toast('Document deleted.');
+      closeDrawer();
+      loadDocuments();
+    } catch (err) {
+      toast(err.message, true);
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Detail drawer
+  // ---------------------------------------------------------------
+  const drawer = document.getElementById('drawer');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
+  let drawerDocId = null;
+
+  async function openDrawer(id) {
+    let doc;
+    try {
+      doc = await api(`/documents/${id}`);
+    } catch (err) {
+      toast(err.message, true);
+      return;
+    }
+    drawerDocId = id;
+    document.getElementById('drawerFilename').textContent = doc.filename;
+
+    const fields = [
+      ['ID', doc.id],
+      ['Status', doc.status],
+      ['Type', doc.file_type],
+      ['Chunks', doc.chunk_count ?? '—'],
+      ['Uploaded', fmtDate(doc.created_at)],
+      ['Updated', fmtDate(doc.updated_at)],
+    ];
+    document.getElementById('drawerFields').innerHTML = fields.map(([k, v]) => `
+      <div class="field-row"><dt>${k}</dt><dd>${escapeHtml(String(v))}</dd></div>
+    `).join('');
+
+    const reasonEl = document.getElementById('drawerFailReason');
+    reasonEl.innerHTML = doc.status === 'failed' && doc.status_reason
+      ? `<div class="fail-reason">${escapeHtml(doc.status_reason)}</div>`
+      : '';
+
+    drawer.classList.add('open');
+    drawerBackdrop.classList.add('open');
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    drawerBackdrop.classList.remove('open');
+    drawerDocId = null;
+  }
+
+  document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+  drawerBackdrop.addEventListener('click', closeDrawer);
+  document.getElementById('drawerDeleteBtn').addEventListener('click', () => {
+    if (drawerDocId) deleteDocument(drawerDocId);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDrawer();
+  });
+
+  // ---------------------------------------------------------------
+  // Ask view
+  // ---------------------------------------------------------------
+  let selectedDocIds = new Set(); // empty = all
+  let allReadyDocs = [];
+
+  async function loadAskChips() {
+    let data;
+    try {
+      data = await api('/documents?limit=100&status=ready');
+    } catch (err) {
+      toast(err.message, true);
+      return;
+    }
+    allReadyDocs = data.items;
+    const wrap = document.getElementById('askDocChips');
+    const allChip = wrap.querySelector('.all-chip');
+    wrap.innerHTML = '';
+    wrap.appendChild(allChip);
+
+    allReadyDocs.forEach(doc => {
+      const chip = document.createElement('button');
+      chip.className = 'doc-chip';
+      chip.dataset.id = doc.id;
+      chip.textContent = doc.filename;
+      chip.title = doc.filename;
+      wrap.appendChild(chip);
+    });
+
+    wrap.querySelectorAll('.doc-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = chip.dataset.id;
+        if (id === '') {
+          selectedDocIds.clear();
+        } else {
+          if (selectedDocIds.has(id)) selectedDocIds.delete(id);
+          else selectedDocIds.add(id);
+        }
+        renderAskChipState();
+      });
+    });
+
+    renderAskChipState();
+  }
+
+  function renderAskChipState() {
+    const wrap = document.getElementById('askDocChips');
+    wrap.querySelectorAll('.doc-chip').forEach(chip => {
+      const isAll = chip.dataset.id === '';
+      const selected = isAll ? selectedDocIds.size === 0 : selectedDocIds.has(chip.dataset.id);
+      chip.classList.toggle('selected', selected);
+    });
+  }
+
+  document.getElementById('askSubmitBtn').addEventListener('click', runQuery);
+  document.getElementById('questionInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runQuery();
+  });
+
+  async function runQuery() {
+    const input = document.getElementById('questionInput');
+    const question = input.value.trim();
+    if (!question) {
+      toast("Type a question first.", true);
+      return;
+    }
+
+    const btn = document.getElementById('askSubmitBtn');
+    const label = document.getElementById('askSubmitLabel');
+    btn.disabled = true;
+    label.innerHTML = '<span class="spinner" style="border-top-color:var(--paper);border-color:rgba(255,255,255,0.3);"></span> Asking…';
+
+    const payload = { question };
+    if (selectedDocIds.size > 0) payload.document_ids = Array.from(selectedDocIds);
+
+    try {
+      const result = await api('/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      renderAnswer(question, result);
+      input.value = '';
+    } catch (err) {
+      toast(err.message, true);
+    } finally {
+      btn.disabled = false;
+      label.textContent = 'Ask';
+    }
+  }
+
+  function renderAnswer(question, result) {
+    const history = document.getElementById('answerHistory');
+    const insufficient = !result.sources || result.sources.length === 0;
+
+    const sourcesHtml = (result.sources || []).map(s => `
+      <div class="source-item">
+        <span class="doc-name">${escapeHtml(s.filename)}</span>
+        <span class="chunk-idx">section ${s.chunk_index}</span>
+      </div>
+    `).join('');
+
+    const block = document.createElement('div');
+    block.className = 'answer-block history-item';
+    block.innerHTML = `
+      <p class="answer-question">"${escapeHtml(question)}"</p>
+      <div class="answer-text${insufficient ? ' insufficient' : ''}">${escapeHtml(result.answer)}</div>
+      ${sourcesHtml ? `<div class="sources-title">Sources</div>${sourcesHtml}` : ''}
+    `;
+    history.prepend(block);
+  }
+
+  // ---------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------
+  refreshHealth();
+  loadDocuments();
+  setInterval(refreshHealth, 15000);
+})();
+</script>
+</body>
+</html>

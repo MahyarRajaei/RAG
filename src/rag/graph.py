@@ -51,6 +51,8 @@ def build_query_graph(
         results = chunk_repository.search_by_embedding(
             query_embedding, top_k=state["top_k"], document_ids=state["document_ids"]
         )
+        for res in results:
+            print(">>>>> ", res[0].id, " ------> ", res[1])
         return {**state, "retrieved": results}
 
     def route_on_relevance(state: QueryState) -> str:
@@ -61,6 +63,7 @@ def build_query_graph(
 
     def generate(state: QueryState) -> QueryState:
         context_str, blocks = build_context(state["retrieved"])
+        print(context_str)
         chain = prompt | structured_llm
         result: RagAnswer = chain.invoke(
             {"context": context_str, "question": state["question"]}
@@ -78,18 +81,19 @@ def build_query_graph(
     graph = StateGraph(QueryState)
     graph.add_node("retrieve", retrieve)
     graph.add_node("generate", generate)
-    graph.add_node("insufficient", insufficient)
+    # graph.add_node("insufficient", insufficient)
 
     graph.set_entry_point("retrieve")
-    graph.add_conditional_edges(
-        "retrieve",
-        route_on_relevance,
-        {
-            "generate": "generate",
-            "insufficient": "insufficient",
-        },
-    )
+    # graph.add_conditional_edges(
+    #     "retrieve",
+    #     route_on_relevance,
+    #     {
+    #         "generate": "generate",
+    #         "insufficient": "insufficient",
+    #     },
+    # )
+    graph.add_edge("retrieve", "generate")
     graph.add_edge("generate", END)
-    graph.add_edge("insufficient", END)
+    # graph.add_edge("insufficient", END)
 
     return graph.compile()

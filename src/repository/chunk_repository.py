@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import config
 from model import Chunk, Document, DocumentStatus
 
 
@@ -19,7 +20,7 @@ class ChunkRepository:
     def search_by_embedding(
         self,
         query_embedding: list[float],
-        top_k: int,
+        top_k: int = config.RETRIEVER_TOP_K,
         document_ids: list[UUID] | None = None,
     ) -> list[tuple[Chunk, float]]:
         distance_col = Chunk.embedding.cosine_distance(query_embedding)

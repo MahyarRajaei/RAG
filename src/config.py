@@ -16,6 +16,9 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
 )
 
+############################################ Storage ###########################################
+STORAGE_BASE_DIR = os.getenv("STORAGE_BASE_DIR")
+
 ########################################## Models #############################################
 
 BASE_URL = os.getenv("NINE_ROUTER_API_BASE")

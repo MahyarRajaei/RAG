@@ -2,11 +2,12 @@
 import uuid
 from pathlib import Path
 
+import config
 from db.storage.base import FileStorage
 
 
 class LocalFileStorage(FileStorage):
-    def __init__(self, base_dir: str):
+    def __init__(self, base_dir: str = config.STORAGE_BASE_DIR):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
 

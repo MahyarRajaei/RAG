@@ -2,12 +2,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import db
 import model
-import repository
 import service
 from rag.ingestion.embedding import LangChainEmbeddingProvider
-from rag.llm import LLMProvider
 
-FILE_PATH = "documents/software_eng.md"
+FILE_PATH = "documents/vector_embeddings.md"
 STORAGE_PATH = "data"
 
 storage = db.LocalFileStorage(STORAGE_PATH)
@@ -66,14 +64,27 @@ try:
 except SQLAlchemyError as e:
     print(f"error! {e}")
 
+### RAG
+# try:
+#     with db.get_db() as db_session:
+#         chunk_repo = repository.ChunkRepository(db_session)
+#         emb = LangChainEmbeddingProvider()
+#         llm = LLMProvider()
+#         qs = service.QueryService(chunk_repo, emb, llm)
+#         ans = qs.answer("explain about software bad smells principles.")
+#         print(ans)
+# except SQLAlchemyError as e:
+#     print(f"error {e}")
+
 
 try:
     with db.get_db() as db_session:
-        chunk_repo = repository.ChunkRepository(db_session)
-        emb = LangChainEmbeddingProvider()
-        llm = LLMProvider()
-        qs = service.QueryService(chunk_repo, emb, llm)
-        ans = qs.answer("explain about software bad smells principles.")
-        print(ans)
+        doc_serv = service.DocumentService(db_session, storage)
+        # for doc in doc_serv.list_doc():
+        #     print(doc.filename)
+
+        doc_id = doc_serv.list_doc()[0].id
+        print(doc_id)
+        doc_serv.delete(doc_id)
 except SQLAlchemyError as e:
     print(f"error {e}")
